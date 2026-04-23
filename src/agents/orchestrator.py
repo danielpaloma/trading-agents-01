@@ -71,7 +71,7 @@ class TradingOrchestrator:
 
         logger.info("Streaming bars. Session ends at %s", self.state.session_end)
         while self.state.session_active:
-            self.client.ib.sleep(1)
+            await asyncio.sleep(1)
             result = self.monitor.check(self.state)
             if result.should_stop:
                 logger.info("Stopping session: %s", result.reason)

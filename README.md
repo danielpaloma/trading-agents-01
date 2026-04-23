@@ -16,14 +16,14 @@ Multi-agent trading loop that connects to **Interactive Brokers (IBKR)** for mar
 
 From the repo root:
 
-```powershell
+```bash
 # create/update .venv and install locked dependencies
 uv sync --dev
 ```
 
 If you don’t want dev dependencies:
 
-```powershell
+```bash
 uv sync
 ```
 
@@ -31,9 +31,10 @@ uv sync
 
 Copy the example env file and fill in real values:
 
-```powershell
-Copy-Item .env.example .env
+```bash
+cp .env.example .env
 ```
+
 
 Required keys:
 
@@ -58,12 +59,29 @@ Trading session defaults (can be changed in `.env`):
 ## Run
 
 Make sure TWS / IB Gateway is running and API connections are enabled, then start the orchestrator:
+To save the logs with a timestamped filename in the `logs` folder, you can use a single-line command:
 
-```powershell
-uv run python .\src\main.py
+
+### Production
+
+```bash
+# macOS/Linux (bash)
+uv run python -m src.main
 ```
 
 You should see logs like “Connected to IBKR …”, “Loaded historical bars”, and “Streaming bars…”.
+
+### Debugging / Logs
+
+
+```bash
+# macOS/Linux (bash)
+uv run python -u -m src.main | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
+```
+
+Ensure the `logs` directory exists before running these commands.
+
+
 
 ## Run tests
 

@@ -37,7 +37,7 @@ htmlcov/
 
 # ---- Logs / runtime ----
 *.log
-
+logs/
 # ---- Jupyter ----
 .ipynb_checkpoints/
 
