@@ -76,7 +76,7 @@ You should see logs like “Connected to IBKR …”, “Loaded historical bars�
 
 ```bash
 # macOS/Linux (bash)
-uv run python -u -m src.main | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
+uv run python -u -m src.main 2>&1 | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
 ```
 
 Ensure the `logs` directory exists before running these commands.
@@ -85,7 +85,7 @@ Ensure the `logs` directory exists before running these commands.
 
 ## Run tests
 
-```powershell
+```bash
 uv run pytest -q
 ```
 
