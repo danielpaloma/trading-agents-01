@@ -1,0 +1,49 @@
+flowchart TB
+  %% Algorithmic Trading System — Main Components & Stages
+  %% Clarity-first, stage-based view (minimal cross-links).
+
+  subgraph Stage1["Stage 1 — Research (offline)"]
+    RData["Historical Data"]
+    RFeat["Feature Engineering"]
+    RBacktest["Backtesting + Cost Model"]
+    RSelect["Strategy Selection\n(params + rules)"]
+
+    RData --> RFeat --> RBacktest --> RSelect
+  end
+
+  subgraph Stage2["Stage 2 — Validation (paper / forward)"]
+    VPaper["Paper Trading / Forward Test"]
+    VReview["Review + Adjust\n(robustness, risk, costs)"]
+
+    RSelect --> VPaper --> VReview --> RSelect
+  end
+
+  subgraph Stage3["Stage 3 — Live Trading (production)"]
+    LData["Live Market Data\n(stream bars/ticks)"]
+    LStrat["Strategy Engine\n(signals → target exposure)"]
+    LRisk["Risk Controls\n(limits, SL/TP, kill rules)"]
+    LExec["Execution Engine\n(orders, routing)"]
+    LBroker["Broker / Exchange"]
+    LState["State + Accounting\n(positions, fills, PnL)"]
+
+    LData --> LStrat --> LRisk --> LExec --> LBroker --> LState
+    LState --> LStrat
+  end
+
+  subgraph Shared["Shared — Cross-cutting Services"]
+    Store["Storage / Recorder\n(bars, signals, orders, fills)"]
+    Mon["Monitoring + Alerting\n(health, data freshness,\nrisk breaches, PnL)"]
+    Cfg["Config + Secrets"]
+    Ops["Ops / Scheduler\n(start/stop sessions)"]
+  end
+
+  %% Only the essential bridges
+  RSelect --> LStrat
+  VReview --> LRisk
+
+  %% Cross-cutting hooks (kept sparse for readability)
+  Ops --> LData
+  Cfg --> LExec
+  LData --> Store
+  LState --> Store
+  LState --> Mon
