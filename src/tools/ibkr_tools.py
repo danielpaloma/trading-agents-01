@@ -1,8 +1,9 @@
 # src/tools/ibkr_tools.py
 from __future__ import annotations
 from datetime import datetime, timezone
-from ib_async import IB, Forex, BarData, MarketOrder, StopOrder, LimitOrder, Trade
+from ib_async import IB, Forex, CFD, Stock, BarData, MarketOrder, StopOrder, LimitOrder, Trade
 from src.models.market_data import Bar
+
 
 class IBKRClient:
     def __init__(self, host: str, port: int, client_id: int):
@@ -17,9 +18,26 @@ class IBKRClient:
     def disconnect(self) -> None:
         self.ib.disconnect()
 
-    def make_forex_contract(self, symbol: str, currency: str, exchange: str) -> Forex:
-        pair, base = symbol.split("/")
-        return Forex(pair=pair + base, exchange=exchange)
+    def create_forex_contract(self, pair: str, exchange: str = "IDEALPRO") -> Forex:
+        """Create a Forex contract for currency pair trading."""
+        return Forex(pair=pair, exchange=exchange)
+
+    def create_cfd_contract(self, symbol: str, currency: str = "USD", exchange: str = "IDEALPRO") -> CFD:
+        """Create a CFD contract for index/currency CFDs."""
+        return CFD(symbol=symbol, currency=currency, exchange=exchange)
+
+    def create_stock_contract(
+        self, symbol: str, currency: str = "USD", exchange: str = "SMART"
+    ) -> Stock:
+        """Create a Stock contract for equity trading."""
+        return Stock(symbol=symbol, currency=currency, exchange=exchange)
+
+    async def qualify(self, contract):
+        """Qualify contract to ensure it's valid for trading."""
+        qualified = await self.ib.qualifyContractsAsync(contract)
+        if not qualified:
+            raise ValueError(f"Contract could not be qualified: {contract}")
+        return qualified[0]
 
     def get_position(self, symbol: str) -> float:
         for pos in self.ib.positions():

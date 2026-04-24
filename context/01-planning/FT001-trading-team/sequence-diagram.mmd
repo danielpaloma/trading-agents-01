@@ -1,0 +1,65 @@
+sequenceDiagram
+    autonumber
+    participant Main as main.py
+    participant Orch as TradingOrchestrator
+    participant Client as IBKRClient
+    participant MDA as MarketDataAgent
+    participant STA as StrategyAgent
+    participant ANA as AnalysisAgent
+    participant RA as RiskAgent
+    participant EA as ExecutionAgent
+    participant MNA as MonitorAgent
+    participant RTB as ib_async Bars
+
+    rect rgb(198, 239, 206)
+        Note over Main,RTB: STAGE 1 — Startup
+        Main->>Orch: start()
+        Orch->>Client: connect()
+        Orch->>Client: make_forex_contract()
+        Orch->>MDA: load_history(state, contract)
+        MDA->>Client: request_historical_bars()
+        Client-->>MDA: list[Bar]
+        MDA-->>Orch: state.history populated
+        Orch->>STA: select_strategy(state)
+        STA-->>Orch: "SMA" or "MeanReversion"
+        Orch->>RTB: reqRealTimeBars()
+        Orch->>Orch: session_active = True
+    end
+
+    rect rgb(255, 235, 156)
+        Note over Orch,MNA: STAGE 2 — Monitor Loop
+        loop every 1 second
+            Orch->>MNA: check(state)
+            MNA-->>Orch: MonitorResult(should_stop)
+            alt should_stop == True
+                Orch->>Orch: session_active = False
+            end
+        end
+    end
+
+    rect rgb(189, 215, 238)
+        Note over RTB,EA: STAGE 3 — Per-Bar Tick Processing
+        RTB->>Orch: _on_bar()
+        Orch->>MDA: on_bar_update(state, bar)
+        MDA-->>Orch: state.current_price updated
+        Orch->>ANA: run(state, strategy)
+        ANA-->>Orch: Signal(direction, strategy)
+        Orch->>RA: evaluate(state, signal)
+        RA-->>Orch: RiskDecision(approved, qty, SL, TP)
+        Orch->>EA: execute(state, decision, contract)
+        alt approved and qty changed
+            EA->>Client: place_bracket_order() or placeOrder()
+            EA->>Client: cancel_all_orders()
+        end
+        EA-->>Orch: state.current_position updated
+    end
+
+    rect rgb(252, 199, 219)
+        Note over Orch,Client: STAGE 4 — Shutdown
+        Orch->>RTB: cancelRealTimeBars()
+        Orch->>EA: execute(state, flat, FLAT)
+        EA->>Client: placeOrder(close)
+        Orch->>MNA: build_summary(state)
+        MNA-->>Orch: SessionSummary
+        Orch->>Client: disconnect()
+    end

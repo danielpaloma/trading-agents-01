@@ -16,49 +16,70 @@ from src.agents.monitor_agent import MonitorAgent
 
 logger = logging.getLogger(__name__)
 
+
 class TradingOrchestrator:
     def __init__(self, config: Config):
         self.config = config
-        self.client = IBKRClient(config.ibkr_host, config.ibkr_port, config.ibkr_client_id)
-        self.state = TradingSessionState(symbol=config.symbol)
+        self.client = IBKRClient(
+            config.ibkr.host, config.ibkr.port, config.ibkr.client_id
+        )
+        self.state = TradingSessionState(symbol=config.instrument.symbol)
         self.market_data = MarketDataAgent(client=self.client)
         self.strategy = StrategyAgent(
-            model=config.model_strategy, api_key=config.openrouter_api_key
+            model=config.model.model_strategy, api_key=config.model.openrouter_api_key
         )
         self.analysis = AnalysisAgent(
-            model=config.model_analysis, api_key=config.openrouter_api_key
+            model=config.model.model_analysis, api_key=config.model.openrouter_api_key
         )
         self.risk = RiskAgent(
-            max_units=config.max_position_units,
-            sl_pct=config.stop_loss_pct,
-            tp_pct=config.take_profit_pct,
-            max_drawdown_pct=config.max_drawdown_pct,
-            initial_capital=config.initial_capital,
+            max_units=config.session.max_position_units,
+            sl_pct=config.risk.stop_loss_pct,
+            tp_pct=config.risk.take_profit_pct,
+            max_drawdown_pct=config.risk.max_drawdown_pct,
+            initial_capital=config.risk.initial_capital,
         )
         self.execution = ExecutionAgent(client=self.client)
         self.monitor = MonitorAgent(
-            initial_capital=config.initial_capital,
-            max_drawdown_pct=config.max_drawdown_pct,
+            initial_capital=config.risk.initial_capital,
+            max_drawdown_pct=config.risk.max_drawdown_pct,
         )
         self.contract = None
         self.active_strategy = "SMA"
 
+    def _create_contract(self):
+        """Create contract based on instrument type: STOCK, FOREX, or CFD."""
+        instrument = self.config.instrument.instrument_type.upper()
+        symbol = self.config.instrument.symbol
+        exchange = self.config.instrument.exchange
+        currency = self.config.instrument.currency
+
+        if instrument == "FOREX":
+            return self.client.create_forex_contract(symbol, exchange)
+        elif instrument == "CFD":
+            return self.client.create_cfd_contract(symbol, currency, exchange)
+        elif instrument == "STOCK":
+            return self.client.create_stock_contract(symbol, currency, exchange)
+        else:
+            raise ValueError(f"Unknown instrument type: {instrument}")
+
     async def start(self) -> None:
         await self.client.connect()
-        logger.info("Connected to IBKR %s:%s", self.config.ibkr_host, self.config.ibkr_port)
+        logger.info("Connected to IBKR %s:%s", self.config.ibkr.host, self.config.ibkr.port)
 
-        self.contract = self.client.make_forex_contract(
-            self.config.symbol, self.config.currency, self.config.exchange
-        )
+        self.contract = self._create_contract()
+        self.contract = await self.client.qualify(self.contract)
+        logger.info("Created & qualified contract: %s (%s)", 
+                   self.contract.symbol, self.contract.secType)
+
         await self.market_data.load_history(
-            self.state, self.contract, self.config.bar_size
+            self.state, self.contract, self.config.session.bar_size
         )
         logger.info("Loaded %d historical bars", len(self.state.history.bars))
 
         self.state.session_active = True
         self.state.session_start = datetime.now(tz=timezone.utc)
         self.state.session_end = self.state.session_start + timedelta(
-            hours=self.config.session_duration_hours
+            hours=self.config.session.session_duration_hours
         )
 
         self.active_strategy = self.strategy.select_strategy(self.state)

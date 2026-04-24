@@ -23,11 +23,11 @@ class RiskAgent:
         sl_pct: float,
         tp_pct: float,
         max_drawdown_pct: float,
-        initial_capital: float = 10000.0,
+        initial_capital: float = 1000.0,
     ):
         self.max_units = max_units
-        self.sl_pct = sl_pct
-        self.tp_pct = tp_pct
+        self.sl_pct = sl_pct #stop loss %
+        self.tp_pct = tp_pct #take profit %
         self.max_drawdown_pct = max_drawdown_pct
         self.initial_capital = initial_capital
 
