@@ -56,6 +56,13 @@ class RiskConfig:
 
 
 @dataclass
+class StrategyConfig:
+    """Trading strategy configuration."""
+    name: str
+    params_file: str  # path to YAML config file for this strategy
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     model: ModelConfig
@@ -63,6 +70,7 @@ class Config:
     instrument: InstrumentConfig
     session: SessionConfig
     risk: RiskConfig
+    strategy: StrategyConfig  # NEW
 
 
 def load_config() -> Config:
@@ -100,5 +108,9 @@ def load_config() -> Config:
             take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.010")),
             max_drawdown_pct=float(os.getenv("MAX_DRAWDOWN_PCT", "0.02")),
             initial_capital=float(os.getenv("INITIAL_CAPITAL", "1000")),
+        ),
+        strategy=StrategyConfig(
+            name=os.getenv("STRATEGY_NAME", "ContrarianStrategy"),
+            params_file=os.getenv("STRATEGY_PARAMS_FILE", ""),
         ),
     )
