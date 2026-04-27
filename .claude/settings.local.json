@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from src.strategies import Strategy, StrategyFactory, StrategyExecutor, SMACrossoverStrategy, BollingerBandsStrategy, ContrarianStrategy; print\\('All imports successful'\\)\")"
+    ]
+  }
+}
