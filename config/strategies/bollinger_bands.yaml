@@ -1,3 +1,12 @@
+# Bollinger Bands Strategy Parameters
+# 
+# Trades long when price drops below lower band, short when above upper band,
+# and neutral when price crosses the moving average.
+#
+# sma_period: Window size for Simple Moving Average calculation and bands.
+# num_std: Number of standard deviations for bands.
+# units: Position size in units.
+
 sma_period: 20
 num_std: 1.0
-units: 1000
+units: 10

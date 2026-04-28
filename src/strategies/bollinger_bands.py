@@ -19,7 +19,7 @@ class BollingerBandsStrategy(Strategy):
         contract,
         sma_period: int = 20,
         num_std: float = 1.0,
-        units: int = 1_000,
+        units: int = 10,
     ):
         super().__init__(name, contract, units)
         self.sma_period = sma_period

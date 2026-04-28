@@ -10,6 +10,13 @@ Defines trading strategies with configurable parameters and loose coupling to ex
 | `BollingerBandsStrategy` | Long when price < lower band, short when > upper band |
 | `ContrarianStrategy` | Trades against recent price momentum |
 
+## Procedure
+
+1. Configure variables using .env file
+2. Configure strategy parameters via YAML files in `config/strategies/`.
+3. Log in to TWS (Interactive Brokers) prior to run trading session.
+4. Run Trading Session with the selected strategy!
+
 ## Configuration
 
 Strategies are configured via YAML files in `config/strategies/`.
@@ -18,7 +25,7 @@ Strategies are configured via YAML files in `config/strategies/`.
 
 ```yaml
 window: 1
-units: 1000
+units: 10
 ```
 
 ### Selecting a Strategy
@@ -34,24 +41,23 @@ If `STRATEGY_PARAMS_FILE` is empty, default parameters are used.
 
 ## Usage
 
-```python
-from src.agents.ibkr_tools import IBKRClient
-from src.strategies import StrategyFactory, StrategyExecutor
-from src.config import load_config
+### Production
 
-config = load_config()
-client = IBKRClient(config.ibkr)
-contract = client.get_contract(config.instrument)
-
-strategy = StrategyFactory.create(
-    config.strategy.name,
-    contract,
-    config.strategy.params_file,
-)
-executor = StrategyExecutor(strategy)
-target = executor.compute_target(state)
+```bash
+# macOS/Linux (bash)
+uv run python -m src.strategies.main
 ```
 
-## Logs
+You should see logs like “Connected to IBKR …”, “Loaded historical bars”, and “Streaming bars…”.
 
-All strategy activity is logged to `./logs/`.
+### Debugging / Logs
+
+
+```bash
+# macOS/Linux (bash)
+uv run python -u -m src.strategies.main 2>&1 | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
+```
+
+Ensure the `logs` directory exists before running these commands.
+
+

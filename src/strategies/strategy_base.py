@@ -17,14 +17,14 @@ class Strategy(ABC):
     Concrete strategies must implement `calculate_position(bars) -> int`.
     """
 
-    def __init__(self, name: str, contract, units: int = 1000):
+    def __init__(self, name: str, contract, units: int = 10):
         """
         Initialize strategy.
 
         Args:
             name: Strategy identifier (e.g., "SMA", "BollingerBands")
             contract: ib_async contract object
-            units: Position size in units (default 1000)
+            units: Position size in units (default 10)
         """
         self.name = name
         self.contract = contract
