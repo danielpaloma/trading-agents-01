@@ -22,9 +22,10 @@
 ## Progress 2026-04-29
 
 [x] improve logging and trading report at session end
+[x] Enhance  summary report
 [x] Add 3 initial strategies and run trading sessions successfully
 [x] check this analysis: context\02-development\20260424-optimization-options.md
-[] Add new strategy: tanh
+[x] Add new strategy: tanh
 
 
 
@@ -32,15 +33,11 @@
 
 ### Architecture
 [] Create the decision tree to understand the rules executed during trading session
+[] Clean up branch and merge to main (ensure branch feat/trading-agents-01 is still available)
 
-
-### Logging
-[x] Enhance  summary report
-[] Add logs for all the agents --> decorator based
 
 ### Strategies
 
-[] Add a new strategy
 [] create a strategy registry: params, docs, scripts with trading logic
 
 ### Backtesting module
