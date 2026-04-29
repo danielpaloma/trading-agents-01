@@ -70,7 +70,7 @@ user_msg = (
 
 ## 5. Execution
 
-There is no clarity on how order placement obey the strategy?
+[x] There is no clarity on how order placement obey the strategy?
 
 
 ## Strategies

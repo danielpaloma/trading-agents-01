@@ -23,7 +23,7 @@
 #
 ################################################################################
 
-OPENROUTER_MODEL_DEFAULT="minimax/minimax-m2.7" #check for models with tools support (https://openrouter.ai/models?fmt=cards&supported_parameters=tools)
+OPENROUTER_MODEL_DEFAULT="moonshotai/kimi-k2.5" #check for models with tools support (https://openrouter.ai/models?fmt=cards&supported_parameters=tools)
 OPENROUTER_BASE_URL="https://openrouter.ai/api"
 
 # Colors for output
