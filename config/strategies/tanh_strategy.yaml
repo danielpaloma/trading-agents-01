@@ -1,0 +1,19 @@
+# Tanh Strategy Configuration
+# Combines mean reversion and momentum using tanh activation
+
+# Mean reversion lookback period (bars)
+mean_reversion_period: 50
+
+# Momentum lookback period (bars)
+momentum_period: 20
+
+# Weight for mean reversion signal (0.0 - 1.0)
+# Remainder (1 - tanh_weight) goes to momentum
+tanh_weight: 0.7
+
+# Minimum signal strength to trigger position (0.0 - 1.0)
+# Below threshold = neutral position (0)
+position_threshold: 0.3
+
+# Position size when signal triggers
+units: 10

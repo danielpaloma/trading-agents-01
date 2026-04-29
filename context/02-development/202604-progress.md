@@ -19,23 +19,29 @@
 [x] Analyze architecture
 
 
+## Progress 2026-04-29
+
+[x] improve logging and trading report at session end
+[x] Add 3 initial strategies and run trading sessions successfully
+[x] check this analysis: context\02-development\20260424-optimization-options.md
+[] Add new strategy: tanh
+
+
+
 ## Next:
 
 ### Architecture
-
-[x] check this analysis: context\02-development\20260424-optimization-options.md
-
-
+[] Create the decision tree to understand the rules executed during trading session
 
 
 ### Logging
-[] Enhance  summary report
+[x] Enhance  summary report
 [] Add logs for all the agents --> decorator based
 
 ### Strategies
 
 [] Add a new strategy
-[] create a strategy registry
+[] create a strategy registry: params, docs, scripts with trading logic
 
 ### Backtesting module
 [] capture historical data --> confirm if we can fetch data from TWS during non-trading hours?

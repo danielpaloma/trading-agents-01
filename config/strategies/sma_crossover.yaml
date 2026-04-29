@@ -1,3 +1,12 @@
+# Trading Logic:
+# The SMA Crossover strategy generates signals as follows:
+# - Calculate the short-term SMA (window: sma_short).
+# - Calculate the long-term SMA (see parameter: sma_long below).
+# - When the short-term SMA crosses above the long-term SMA: generate a BUY (long) signal (enter/hold position).
+# - When the short-term SMA crosses below the long-term SMA: generate a SELL (exit/go short) signal.
+# - Only act on actual crossovers, not when the moving averages remain above/below each other.
+# - The number of units to trade is determined by the 'units' parameter below.
+
 sma_short: 50
 sma_long: 200
 units: 10

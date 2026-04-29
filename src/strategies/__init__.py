@@ -6,6 +6,7 @@ from src.strategies.executor import StrategyExecutor
 from src.strategies.sma_crossover import SMACrossoverStrategy
 from src.strategies.bollinger_bands import BollingerBandsStrategy
 from src.strategies.contrarian import ContrarianStrategy
+from src.strategies.tanh_strategy import TanhStrategy
 
 __all__ = [
     "Strategy",
@@ -14,4 +15,5 @@ __all__ = [
     "SMACrossoverStrategy",
     "BollingerBandsStrategy",
     "ContrarianStrategy",
+    "TanhStrategy",
 ]

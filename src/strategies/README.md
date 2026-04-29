@@ -17,13 +17,15 @@ src/strategies/
 ├── sma_crossover.py      # SMACrossoverStrategy implementation
 ├── bollinger_bands.py    # BollingerBandsStrategy implementation
 ├── contrarian.py         # ContrarianStrategy implementation
+├── tanh_strategy.py      # TanhStrategy implementation
 ├── factory.py            # StrategyFactory.create(strategy_name, contract, config)
 └── executor.py           # StrategyExecutor - loosely coupled execution driver
 
 config/strategies/
 ├── sma_crossover.yaml    # Parameters for SMA Crossover
 ├── bollinger_bands.yaml  # Parameters for Bollinger Bands
-└── contrarian.yaml       # Parameters for Contrarian
+├── contrarian.yaml       # Parameters for Contrarian
+└── tanh_strategy.yaml    # Parameters for Tanh Strategy
 
 .env / .env.example
 ```
@@ -37,6 +39,7 @@ config/strategies/
 | `SMACrossoverStrategy` | Long when short SMA > long SMA, short otherwise |
 | `BollingerBandsStrategy` | Long when price < lower band, short when > upper band |
 | `ContrarianStrategy` | Trades against recent price momentum |
+| `TanhStrategy` | ML-inspired mean reversion + momentum with tanh activation |
 
 ## Procedure
 
@@ -53,6 +56,16 @@ Strategies are configured via YAML files in `config/strategies/`.
 
 ```yaml
 window: 1
+units: 10
+```
+
+### Example: `config/strategies/tanh_strategy.yaml`
+
+```yaml
+mean_reversion_period: 20
+momentum_period: 10
+tanh_weight: 0.6
+position_threshold: 0.3
 units: 10
 ```
 

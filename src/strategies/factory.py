@@ -10,6 +10,7 @@ from src.strategies.strategy_base import Strategy
 from src.strategies.sma_crossover import SMACrossoverStrategy
 from src.strategies.bollinger_bands import BollingerBandsStrategy
 from src.strategies.contrarian import ContrarianStrategy
+from src.strategies.tanh_strategy import TanhStrategy
 
 if TYPE_CHECKING:
     pass
@@ -20,6 +21,7 @@ _STRATEGY_CLASSES = {
     "SMACrossoverStrategy": SMACrossoverStrategy,
     "BollingerBandsStrategy": BollingerBandsStrategy,
     "ContrarianStrategy": ContrarianStrategy,
+    "TanhStrategy": TanhStrategy,
 }
 
 
