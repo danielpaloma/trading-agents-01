@@ -1,6 +1,6 @@
 # trading-agents-01
 
-Multi-agent trading loop that connects to **Interactive Brokers (IBKR)** for market data + execution, and uses **LLMs (via OpenRouter / Anthropic)** for analysis/strategy decisions.
+Independent trading strategies that connect to **Interactive Brokers (IBKR)** for market data and execution. Configurable trading strategies with deterministic, rule-based position calculation.
 
 ## Prerequisites
 
@@ -36,11 +36,6 @@ cp .env.example .env
 ```
 
 
-Required keys:
-
-- **`ANTHROPIC_API_KEY`**: used by Anthropic directly (some agent stacks may rely on it)
-- **`OPENROUTER_API_KEY`**: used by agents that call OpenRouter (strategy/analysis in this codebase)
-
 IBKR connection defaults (can be changed in `.env`):
 
 - **`IBKR_HOST`**: default `127.0.0.1`
@@ -56,9 +51,14 @@ Trading session defaults (can be changed in `.env`):
 - **`SESSION_DURATION_HOURS`**, **`MAX_POSITION_UNITS`**
 - Risk: **`STOP_LOSS_PCT`**, **`TAKE_PROFIT_PCT`**, **`MAX_DRAWDOWN_PCT`**, **`INITIAL_CAPITAL`**
 
+Strategy selection (can be changed in `.env`):
+
+- **`STRATEGY_NAME`**: default `ContrarianStrategy`
+- **`STRATEGY_PARAMS_FILE`**: default `` (uses strategy defaults)
+
 ## Run
 
-Make sure TWS / IB Gateway is running and API connections are enabled, then start the orchestrator:
+Make sure TWS / IB Gateway is running and API connections are enabled, then start the trading session:
 To save the logs with a timestamped filename in the `logs` folder, you can use a single-line command:
 
 
@@ -66,7 +66,7 @@ To save the logs with a timestamped filename in the `logs` folder, you can use a
 
 ```bash
 # macOS/Linux (bash)
-uv run python -m src.main
+uv run python -m src.strategies.main
 ```
 
 You should see logs like “Connected to IBKR …”, “Loaded historical bars”, and “Streaming bars…”.
@@ -76,7 +76,7 @@ You should see logs like “Connected to IBKR …”, “Loaded historical bars�
 
 ```bash
 # macOS/Linux (bash)
-uv run python -u -m src.main 2>&1 | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
+uv run python -u -m src.strategies.main 2>&1 | tee "logs/session_$(date +'%Y%m%d_%H%M%S').txt"
 ```
 
 Ensure the `logs` directory exists before running these commands.
@@ -96,14 +96,15 @@ uv run pytest -q
   - Check the port: `7497` is commonly **paper** TWS; `7496` is commonly **live** TWS (varies by setup).
   - Try changing `IBKR_CLIENT_ID` if another client is already connected.
 
-- **Env var errors like `KeyError: 'OPENROUTER_API_KEY'`**
-  - Ensure you created `.env` and filled in the required keys.
+- **Env var errors**
+  - Ensure you created `.env` from `.env.example` and configured required settings.
 
 ## Project layout
 
-- **`src/main.py`**: entrypoint
-- **`src/agents/`**: orchestrator + specialized agents
-- **`src/tools/`**: IBKR client wrappers and utilities
+- **`src/strategies/main.py`**: entrypoint for trading sessions
+- **`src/strategies/`**: trading strategies (SMA Crossover, Bollinger Bands, Contrarian, Tanh)
+- **`src/tools/`**: IBKR client wrappers
 - **`src/config.py`**: loads config from `.env` / environment variables
+- **`src/state.py`**: trading session state management
 - **`tests/`**: unit tests
 
