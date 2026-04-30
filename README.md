@@ -1,66 +1,87 @@
-# trading-agents-01
+# Trading Bot - Different Strategies
 
-Independent trading strategies that connect to **Interactive Brokers (IBKR)** for market data and execution. Configurable trading strategies with deterministic, rule-based position calculation.
+This application defines trading strategies with configurable parameters and loose coupling to execution.
+Trading bot executes the orders (buy/sell) based on the selected strategy and defined parameters.
 
-## Prerequisites
+**Architecture:** The strategies module exposes a base class `Strategy` that all strategies inherit. A factory function reads strategy name and parameters from environment/config and returns the appropriate strategy instance. Each strategy implements `calculate_position(bars) -> int` returning target position. Execution agent uses the strategy without coupling to concrete implementations.
 
-- **Windows + PowerShell** (commands below assume this)
-- **Python 3.12+**
-- **uv** (recommended) for reproducible installs using `uv.lock`
-  - Install: `pip install uv`
-- **IBKR Trader Workstation (TWS)** or **IB Gateway** running locally (paper trading recommended)
+**Tech Stack:** Python 3.12+, pandas, numpy, PyYAML, standard logging (to `./logs`)
 
-## Setup
+---
 
-### 1) Create environment and install dependencies
+## File Structure
 
-From the repo root:
+```
+src/strategies/
+├── __init__.py           # Exports Strategy, StrategyFactory, all strategy classes
+├── strategy_base.py      # Abstract base class Strategy
+├── sma_crossover.py      # SMACrossoverStrategy implementation
+├── bollinger_bands.py    # BollingerBandsStrategy implementation
+├── contrarian.py         # ContrarianStrategy implementation
+├── tanh_strategy.py      # TanhStrategy implementation
+├── factory.py            # StrategyFactory.create(strategy_name, contract, config)
+└── executor.py           # StrategyExecutor - loosely coupled execution driver
 
-```bash
-# create/update .venv and install locked dependencies
-uv sync --dev
+config/strategies/
+├── sma_crossover.yaml    # Parameters for SMA Crossover
+├── bollinger_bands.yaml  # Parameters for Bollinger Bands
+├── contrarian.yaml       # Parameters for Contrarian
+└── tanh_strategy.yaml    # Parameters for Tanh Strategy
+
+.env / .env.example
 ```
 
-If you don’t want dev dependencies:
+---
 
-```bash
-uv sync
+## Available Strategies
+
+| Strategy | Description |
+|----------|-------------|
+| `SMACrossoverStrategy` | Long when short SMA > long SMA, short otherwise |
+| `BollingerBandsStrategy` | Long when price < lower band, short when > upper band |
+| `ContrarianStrategy` | Trades against recent price momentum |
+| `TanhStrategy` | ML-inspired mean reversion + momentum with tanh activation |
+
+## Procedure
+
+1. Configure variables using .env file
+2. Configure strategy parameters via YAML files in `config/strategies/`.
+3. Log in to TWS (Interactive Brokers) prior to run trading session.
+4. Run Trading Session with the selected strategy!
+
+## Configuration
+
+Strategies are configured via YAML files in `config/strategies/`.
+
+### Example: `config/strategies/contrarian.yaml`
+
+```yaml
+window: 1
+units: 10
 ```
 
-### 2) Configure environment variables
+### Example: `config/strategies/tanh_strategy.yaml`
 
-Copy the example env file and fill in real values:
-
-```bash
-cp .env.example .env
+```yaml
+mean_reversion_period: 20
+momentum_period: 10
+tanh_weight: 0.6
+position_threshold: 0.3
+units: 10
 ```
 
+### Selecting a Strategy
 
-IBKR connection defaults (can be changed in `.env`):
+Set in `.env`:
 
-- **`IBKR_HOST`**: default `127.0.0.1`
-- **`IBKR_PORT`**: default `7497` (commonly TWS paper)
-- **`IBKR_CLIENT_ID`**: default `1`
+```bash
+STRATEGY_NAME=ContrarianStrategy
+STRATEGY_PARAMS_FILE=config/strategies/contrarian.yaml
+```
 
-Trading session defaults (can be changed in `.env`):
+If `STRATEGY_PARAMS_FILE` is empty, default parameters are used.
 
-- **`SYMBOL`**: default `EUR/USD`
-- **`EXCHANGE`**: default `IDEALPRO`
-- **`CURRENCY`**: default `USD`
-- **`BAR_SIZE`**: default `20 mins`
-- **`SESSION_DURATION_HOURS`**, **`MAX_POSITION_UNITS`**
-- Risk: **`STOP_LOSS_PCT`**, **`TAKE_PROFIT_PCT`**, **`MAX_DRAWDOWN_PCT`**, **`INITIAL_CAPITAL`**
-
-Strategy selection (can be changed in `.env`):
-
-- **`STRATEGY_NAME`**: default `ContrarianStrategy`
-- **`STRATEGY_PARAMS_FILE`**: default `` (uses strategy defaults)
-
-## Run
-
-Make sure TWS / IB Gateway is running and API connections are enabled, then start the trading session:
-To save the logs with a timestamped filename in the `logs` folder, you can use a single-line command:
-
+## Usage
 
 ### Production
 
@@ -81,30 +102,4 @@ uv run python -u -m src.strategies.main 2>&1 | tee "logs/session_$(date +'%Y%m%d
 
 Ensure the `logs` directory exists before running these commands.
 
-
-
-## Run tests
-
-```bash
-uv run pytest -q
-```
-
-## Troubleshooting
-
-- **IBKR won’t connect**
-  - Verify TWS/IB Gateway is running and the API is enabled (and “Read-Only API” is *off* if you want to place trades).
-  - Check the port: `7497` is commonly **paper** TWS; `7496` is commonly **live** TWS (varies by setup).
-  - Try changing `IBKR_CLIENT_ID` if another client is already connected.
-
-- **Env var errors**
-  - Ensure you created `.env` from `.env.example` and configured required settings.
-
-## Project layout
-
-- **`src/strategies/main.py`**: entrypoint for trading sessions
-- **`src/strategies/`**: trading strategies (SMA Crossover, Bollinger Bands, Contrarian, Tanh)
-- **`src/tools/`**: IBKR client wrappers
-- **`src/config.py`**: loads config from `.env` / environment variables
-- **`src/state.py`**: trading session state management
-- **`tests/`**: unit tests
 
