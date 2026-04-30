@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \"from src.strategies import Strategy, StrategyFactory, StrategyExecutor, SMACrossoverStrategy, BollingerBandsStrategy, ContrarianStrategy; print\\('All imports successful'\\)\")"
+      "Bash(python -c \"from src.strategies import Strategy, StrategyFactory, StrategyExecutor, SMACrossoverStrategy, BollingerBandsStrategy, ContrarianStrategy; print\\('All imports successful'\\)\")",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(uv run *)",
+      "Bash(git add *)"
     ]
   }
 }
