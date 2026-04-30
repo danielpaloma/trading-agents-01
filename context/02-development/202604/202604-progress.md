@@ -27,17 +27,16 @@
 [x] check this analysis: context\02-development\20260424-optimization-options.md
 [x] Add new strategy: tanh
 
+## Progress 2026-04-30
+[x] Clean up branch and merge to main (ensure branch feat/trading-agents-01 is still available)
 
+### Architecture
+[x] Create the decision tree to understand the rules executed during trading session. Check this diagram: context\01-planning\FT000-background\order-execution-decision-tree.md
 
 ## Next:
 
-### Architecture
-[] Create the decision tree to understand the rules executed during trading session
-[] Clean up branch and merge to main (ensure branch feat/trading-agents-01 is still available)
-
-
 ### Strategies
-
+[] Analyze and understand the decision trees: context\01-planning\FT000-background\order-execution-decision-tree.md
 [] create a strategy registry: params, docs, scripts with trading logic
 
 ### Backtesting module
