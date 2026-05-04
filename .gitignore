@@ -56,3 +56,9 @@ Desktop.ini
 !.vscode/tasks.json
 
 .idea/
+
+# Ignore all archive folders anywhere in the project
+archive/
+**/archive/
+*/archive/
+*/archive/*

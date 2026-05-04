@@ -1,10 +1,18 @@
 # src/config.py
 """Configuration management for Trading Agents."""
 import os
+import re
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def _get_float(key: str, default: str) -> float:
+    """Get float from env, stripping inline comments."""
+    value = os.getenv(key, default)
+    value = re.sub(r'#.*$', '', value).strip()
+    return float(value)
 
 
 @dataclass
@@ -100,14 +108,14 @@ def load_config() -> Config:
         ),
         session=SessionConfig(
             bar_size=os.getenv("BAR_SIZE", "1 min"),
-            session_duration_hours=float(os.getenv("SESSION_DURATION_HOURS", "0.01666")),
-            max_position_units=float(os.getenv("MAX_POSITION_UNITS", "10")),
+            session_duration_hours=_get_float("SESSION_DURATION_HOURS", "0.01666"),
+            max_position_units=_get_float("MAX_POSITION_UNITS", "10"),
         ),
         risk=RiskConfig(
-            stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.005")),
-            take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.010")),
-            max_drawdown_pct=float(os.getenv("MAX_DRAWDOWN_PCT", "0.02")),
-            initial_capital=float(os.getenv("INITIAL_CAPITAL", "1000")),
+            stop_loss_pct=_get_float("STOP_LOSS_PCT", "0.005"),
+            take_profit_pct=_get_float("TAKE_PROFIT_PCT", "0.010"),
+            max_drawdown_pct=_get_float("MAX_DRAWDOWN_PCT", "0.02"),
+            initial_capital=_get_float("INITIAL_CAPITAL", "1000"),
         ),
         strategy=StrategyConfig(
             name=os.getenv("STRATEGY_NAME", "ContrarianStrategy"),
