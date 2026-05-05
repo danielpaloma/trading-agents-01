@@ -15,7 +15,7 @@ ib.connect()
 # strategy parameters
 freq = "1 min"
 window = 1
-units = 1000
+units = 10
 end_time = (datetime.now(timezone.utc) + dt.timedelta(seconds = 330)).time() # stop condition (5.5 mins from now)
 sl_perc = 0.1
 tp_perc = 0.1

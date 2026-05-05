@@ -1,0 +1,79 @@
+flowchart TD
+    subgraph SessionStart["1. Session Initialization"]
+        A[Start Session] --> B[Initialize Parameters]
+        B --> C[Connect to IBKR]
+        C --> D[Qualify Contracts<br/>Forex: EURUSD, CFD: EUR/USD]
+        D --> E[Initialize Data Stream<br/>1-min bars, 1 day history]
+    end
+
+    subgraph StrategyLogic["2. Trading Strategy Logic (Mean Reversion)"]
+        F[New Bar Received] --> G{"Has New Bar?"}
+        G -->|No| H[Display Trade Report]
+        G -->|Yes| I[Calculate Log Returns]
+        I --> J[Calculate Rolling Mean<br/>Window=1]
+        J --> K["Generate Position Signal<br/>-sign(mean_returns)"]
+        K --> L[Calculate Target Position<br/>signal * units]
+    end
+
+    subgraph RiskManagement["3. Risk Management (SL/TP Calculation)"]
+        L --> M{"Target > 0?"}
+        M -->|"Yes: LONG"| N[SL = Price * 0.999<br/>TP = Price * 1.001]
+        M -->|"No"| O{"Target < 0?"}
+        O -->|"Yes: SHORT"| P[SL = Price * 1.001<br/>TP = Price * 0.999]
+        O -->|"No: NEUTRAL"| Q[SL = None<br/>TP = None]
+    end
+
+    subgraph TradeExecution["4. Trade Execution Logic"]
+        R[Execute Trade] --> S{"Target vs Current Position"}
+
+S -->|"Target > 0<br/>Going LONG"| T{"Current Position?"}
+        T -->|"< 0 SHORT"| V[Cancel SL/TP Orders<br/>BUY to Close Short<br/>Then BUY Bracket Order]
+
+        S -->|"Target < 0<br/>Going SHORT"| W{"Current Position?"}
+        W -->|"= 0 Neutral"| X["SELL Bracket Order<br/>Qty=|Target|"]
+        W -->|"> 0 LONG"| Y[Cancel SL/TP Orders<br/>SELL to Close Long<br/>Then SELL Bracket Order]
+
+        S -->|"Target = 0<br/>Going NEUTRAL"| Z{"Current Position?"}
+        Z -->|"< 0 SHORT"| AA[Cancel SL/TP Orders<br/>BUY to Close Short]
+        Z -->|"> 0 LONG"| AB[Cancel SL/TP Orders<br/>SELL to Close Long]
+        Z -->|"= 0 Neutral"| AC[No Action]
+    end
+
+    subgraph OrderTypes["5. Bracket Order Structure"]
+        AD[Bracket Order] --> AE[Parent: MKT Order<br/>Action: BUY/SELL<br/>Transmit: False if SL/TP]
+        AE --> AF{"SL Enabled?"}
+        AF -->|Yes| AG[Child1: STP Order<br/>Opposite Action<br/>Trigger=SL_Price<br/>Parent Link]
+        AF -->|No| AH
+        AG --> AI{"TP Enabled?"}
+        AH --> AI
+        AI -->|Yes| AJ[Child2: LMT Order<br/>Opposite Action<br/>Limit=TP_Price<br/>Parent Link<br/>Transmit: True]
+        AI -->|No| AK[Update Last Child<br/>Transmit: True]
+    end
+
+    subgraph SessionStop["6. Session Stop Conditions"]
+        AL[Monitor Loop<br/>Every 5 sec] --> AM{"Check Conditions"}
+
+        AM -->|"Condition 1"| AN{"Current Time >= End Time?"}
+        AN -->|Yes| AO[Close All Positions<br/>Cancel Data Stream<br/>Final Report<br/>Disconnect]
+        AN -->|No| AP
+
+        AM -->|"Condition 2"| AQ{"SL/TP Triggered?<br/>exp_pos != curr_pos"}
+        AQ -->|Yes| AR[Wait 5 sec<br/>Confirm Position Change<br/>Close All<br/>Final Report<br/>Disconnect]
+        AQ -->|No| AS
+
+        AM -->|"Condition 3"| AT{"No Update > 120s?"}
+        AT -->|Yes| AU[Cancel Data Stream<br/>Try Reconnect]
+        AU -->|Success| AV[Resume Trading]
+        AU -->|Fail| AW[Close Positions<br/>Final Report<br/>Disconnect]
+        AT -->|No| AX[Continue Monitoring]
+
+        AP --> AL
+        AS --> AL
+        AX --> AL
+    end
+
+    %% Connections
+        E --> F
+        N --> R
+        P --> R
+        Q --> R
