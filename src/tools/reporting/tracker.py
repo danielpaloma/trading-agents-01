@@ -1,9 +1,10 @@
 # src/tools/reporting/tracker.py
 """Position tracking and P&L calculation."""
 from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
-from typing import List
+
 from ib_async import Fill
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PositionTracker:
     """Track fills and calculate realized P&L using FIFO matching."""
-    fills: List[Fill] = field(default_factory=list)
+    fills: list[Fill] = field(default_factory=list)
     realized_pnl: float = 0.0
     total_commissions: float = 0.0
 
@@ -80,7 +81,7 @@ class PositionTracker:
             "avg_sell_price": avg_sell_price,
         }
 
-    def to_records(self) -> List[dict]:
+    def to_records(self) -> list[dict]:
         """Convert fills to dictionary records for reporting."""
         records = []
 

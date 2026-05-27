@@ -1,9 +1,12 @@
 # src/models/market_data.py
 from __future__ import annotations
+
 from collections import deque
 from datetime import datetime
-from pydantic import BaseModel
+
 import pandas as pd
+from pydantic import BaseModel
+
 
 class Bar(BaseModel):
     timestamp: datetime

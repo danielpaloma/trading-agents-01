@@ -1,12 +1,13 @@
 # tests/strategies/test_tanh_strategy.py
 """Tests for TanhStrategy."""
 from __future__ import annotations
-import pytest
-import numpy as np
+
 from datetime import datetime, timedelta
 
-from src.strategies.tanh_strategy import TanhStrategy
+import pytest
+
 from src.models.market_data import Bar
+from src.strategies.tanh_strategy import TanhStrategy
 
 
 @pytest.fixture

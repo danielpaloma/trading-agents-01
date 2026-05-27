@@ -1,20 +1,18 @@
 """Independent trading session entry point."""
 from __future__ import annotations
+
 import asyncio
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import List
+from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
 from ib_async import MarketOrder
 
-from src.tools.reporting import PositionTracker, log_final_report
-
 from src.config import load_config
-from src.tools.ibkr_tools import IBKRClient
-from src.strategies import StrategyFactory, StrategyExecutor
 from src.state import TradingSessionState
+from src.strategies import StrategyExecutor, StrategyFactory
+from src.tools.ibkr_tools import IBKRClient
+from src.tools.reporting import PositionTracker, log_final_report
 
 load_dotenv()
 
@@ -120,7 +118,7 @@ async def run_session():
         state.history.append(bar)
     state.current_price = bars[-1].close if bars else 0.0
 
-    session_start = datetime.now(timezone.utc)
+    session_start = datetime.now(UTC)
     session_end = session_start + timedelta(hours=config.session.session_duration_hours)
     logger.info(
         "Session duration: %.2f hours | End time: %s",
@@ -149,7 +147,7 @@ async def run_session():
     while True:
         await asyncio.sleep(5)  # Check every 5 seconds
 
-        if datetime.now(timezone.utc) >= session_end:
+        if datetime.now(UTC) >= session_end:
             logger.info("End time reached - closing session")
             break
 

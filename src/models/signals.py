@@ -1,6 +1,8 @@
 # src/models/signals.py
 from enum import Enum
+
 from pydantic import BaseModel
+
 
 class Direction(str, Enum):
     LONG = "long"

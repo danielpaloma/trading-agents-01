@@ -1,10 +1,12 @@
 # src/strategies/bollinger_bands.py
 """Bollinger Bands Strategy."""
 from __future__ import annotations
-import pandas as pd
+
 import numpy as np
-from src.strategies.strategy_base import Strategy
+import pandas as pd
+
 from src.models.market_data import Bar
+from src.strategies.strategy_base import Strategy
 
 
 class BollingerBandsStrategy(Strategy):

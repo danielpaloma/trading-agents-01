@@ -1,6 +1,7 @@
 # tests/test_state.py
+from src.models.signals import Direction, Signal
 from src.state import TradingSessionState
-from src.models.signals import Signal, Direction
+
 
 def test_state_default_values():
     state = TradingSessionState(symbol="EUR/USD")

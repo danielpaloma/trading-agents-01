@@ -1,7 +1,10 @@
 # src/tools/ibkr_tools.py
 from __future__ import annotations
-from datetime import datetime, timezone
-from ib_async import IB, Forex, CFD, Stock, BarData, MarketOrder, StopOrder, LimitOrder, Trade
+
+from datetime import UTC, datetime
+
+from ib_async import CFD, IB, BarData, Forex, LimitOrder, MarketOrder, Stock, StopOrder, Trade
+
 from src.models.market_data import Bar
 
 
@@ -66,8 +69,8 @@ class IBKRClient:
         )
         return [
             Bar(
-                timestamp=b.date.replace(tzinfo=timezone.utc)
-                    if hasattr(b.date, "replace") else datetime.now(tz=timezone.utc),
+                timestamp=b.date.replace(tzinfo=UTC)
+                    if hasattr(b.date, "replace") else datetime.now(tz=UTC),
                 open=b.open, high=b.high, low=b.low,
                 close=b.close, volume=float(b.volume),
             )

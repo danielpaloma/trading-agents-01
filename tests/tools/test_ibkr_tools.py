@@ -1,7 +1,10 @@
 # tests/tools/test_ibkr_tools.py
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
 from src.tools.ibkr_tools import IBKRClient
+
 
 @pytest.fixture
 def mock_ib():

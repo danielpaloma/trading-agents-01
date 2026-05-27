@@ -1,10 +1,13 @@
 # src/state.py
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
+
 from src.models.market_data import OHLCVHistory
-from src.models.signals import Signal
 from src.models.orders import OrderFill
+from src.models.signals import Signal
+
 
 @dataclass
 class TradingSessionState:
