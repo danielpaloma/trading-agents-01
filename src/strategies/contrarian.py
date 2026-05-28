@@ -1,9 +1,11 @@
 # src/strategies/contrarian.py
 """Contrarian Strategy."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from ib_async.contract import Contract
 
 from src.models.market_data import Bar
 from src.strategies.strategy_base import Strategy
@@ -15,7 +17,7 @@ class ContrarianStrategy(Strategy):
     Position: -1 * sign(recent returns)
     """
 
-    def __init__(self, name: str, contract, window: int = 1, units: int = 1_000):
+    def __init__(self, name: str, contract: Contract, window: int = 1, units: int = 1_000):
         super().__init__(name, contract, units)
         self.window = window
 

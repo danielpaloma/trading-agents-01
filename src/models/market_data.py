@@ -16,6 +16,7 @@ class Bar(BaseModel):
     close: float
     volume: float
 
+
 class OHLCVHistory:
     def __init__(self, max_bars: int = 500):
         self.bars: deque[Bar] = deque(maxlen=max_bars)
@@ -26,6 +27,4 @@ class OHLCVHistory:
     def to_dataframe(self) -> pd.DataFrame:
         if not self.bars:
             return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
-        return pd.DataFrame(
-            [b.model_dump() for b in self.bars]
-        ).set_index("timestamp")
+        return pd.DataFrame([b.model_dump() for b in self.bars]).set_index("timestamp")

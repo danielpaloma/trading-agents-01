@@ -1,5 +1,6 @@
 # src/strategies/__init__.py
 """Trading strategies module."""
+
 from src.strategies.bollinger_bands import BollingerBandsStrategy
 from src.strategies.contrarian import ContrarianStrategy
 from src.strategies.executor import StrategyExecutor

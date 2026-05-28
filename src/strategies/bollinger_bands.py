@@ -1,9 +1,11 @@
 # src/strategies/bollinger_bands.py
 """Bollinger Bands Strategy."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from ib_async.contract import Contract
 
 from src.models.market_data import Bar
 from src.strategies.strategy_base import Strategy
@@ -18,7 +20,7 @@ class BollingerBandsStrategy(Strategy):
     def __init__(
         self,
         name: str,
-        contract,
+        contract: Contract,
         sma_period: int = 20,
         num_std: float = 1.0,
         units: int = 10,
@@ -41,9 +43,7 @@ class BollingerBandsStrategy(Strategy):
 
         df["position"] = np.where(df["close"] < df["lower"], 1, float("nan"))
         df["position"] = np.where(df["close"] > df["upper"], -1, df["position"])
-        df["position"] = np.where(
-            df["distance"] * df["distance"].shift(1) < 0, 0, df["position"]
-        )
+        df["position"] = np.where(df["distance"] * df["distance"].shift(1) < 0, 0, df["position"])
         df["position"] = df["position"].ffill().fillna(0)
 
         if len(df) == 0:

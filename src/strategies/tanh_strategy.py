@@ -1,9 +1,11 @@
 # src/strategies/tanh_strategy.py
 """Tanh Strategy - ML-inspired mean reversion and momentum fusion."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from ib_async.contract import Contract
 
 from src.models.market_data import Bar
 from src.strategies.strategy_base import Strategy
@@ -24,7 +26,7 @@ class TanhStrategy(Strategy):
     def __init__(
         self,
         name: str,
-        contract,
+        contract: Contract,
         mean_reversion_period: int = 20,
         momentum_period: int = 10,
         tanh_weight: float = 0.6,
@@ -72,8 +74,7 @@ class TanhStrategy(Strategy):
 
         momentum_weight = 1 - self.tanh_weight
         combined_signal = (
-            self.tanh_weight * mean_reversion_signal +
-            momentum_weight * momentum_signal
+            self.tanh_weight * mean_reversion_signal + momentum_weight * momentum_signal
         )
 
         latest_signal = combined_signal.iloc[-1]
@@ -84,3 +85,6 @@ class TanhStrategy(Strategy):
             position_direction = int(np.sign(latest_signal))
 
         return position_direction * self.units
+
+    def SampleFunction(a, b):
+        return a + b

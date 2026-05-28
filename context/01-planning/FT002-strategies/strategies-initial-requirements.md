@@ -24,4 +24,3 @@ context\01-planning\FT002-strategies\strategies.py
 * This module must produce logs that are captured here: ./logs
 * Use this file as reference, reuse some functions if needed: 'context\references\algo-trading-course\trader_ibkr.py'
 * Keep the implementation concrete and focused on: strategy definition, parameter setup, loose coupling between strategies and execution.
-

@@ -1,5 +1,6 @@
 # src/tools/reporting/tracker.py
 """Position tracking and P&L calculation."""
+
 from __future__ import annotations
 
 import logging
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PositionTracker:
     """Track fills and calculate realized P&L using FIFO matching."""
+
     fills: list[Fill] = field(default_factory=list)
     realized_pnl: float = 0.0
     total_commissions: float = 0.0
@@ -63,11 +65,13 @@ class PositionTracker:
         total_sold = sum(f.execution.shares for f in sell_fills)
         avg_buy_price = (
             sum(f.execution.price * f.execution.shares for f in buy_fills) / total_bought
-            if total_bought > 0 else 0.0
+            if total_bought > 0
+            else 0.0
         )
         avg_sell_price = (
             sum(f.execution.price * f.execution.shares for f in sell_fills) / total_sold
-            if total_sold > 0 else 0.0
+            if total_sold > 0
+            else 0.0
         )
 
         return {
@@ -91,11 +95,13 @@ class PositionTracker:
             price = fill.execution.price
             time = fill.execution.time
 
-            records.append({
-                "time": time,
-                "side": side,
-                "qty": qty,
-                "price": price,
-            })
+            records.append(
+                {
+                    "time": time,
+                    "side": side,
+                    "qty": qty,
+                    "price": price,
+                }
+            )
 
         return records

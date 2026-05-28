@@ -512,7 +512,7 @@ tracking_session_state = {
     "current_position": 0.0,      # Actual position from IBKR
     "current_price": 0.0,
     "history": OHLCVHistory(),
-    
+
     # NEW: Order tracking
     "expected_position": 0.0,      # Position we think we have
     "active_stop_loss": Order,     # Reference to SL order (for cancellation)

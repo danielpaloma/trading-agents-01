@@ -455,4 +455,3 @@ The course outline itself hints at “what is still missing” after a basic tra
   - drawdown limits
   - volatility targeting
   - max turnover / max trades per hour
-

@@ -54,7 +54,7 @@ class TradingSessionState:
     session_end: datetime | None = None
     stop_triggered: bool = False
     error_count: int = 0
-    
+
     # NEW: Track active SL/TP orders for cancellation
     active_stop_loss: Any | None = None  # ib_async Order object
     active_take_profit: Any | None = None  # ib_async Order object
@@ -125,10 +125,10 @@ def close_to_neutral(client: IBKRClient, contract, current_pos: float) -> None:
     """Close current position using MarketOrder."""
     if current_pos == 0:
         return
-    
+
     action = "BUY" if current_pos < 0 else "SELL"  # Opposite to close
     qty = abs(current_pos)
-    
+
     order = MarketOrder(action, qty)
     client.ib.placeOrder(contract, order)
     logger.info("Closing position: %s %.2f to go NEUTRAL", action, qty)
@@ -138,31 +138,31 @@ def close_to_neutral(client: IBKRClient, contract, current_pos: float) -> None:
 
 ```python
 def open_position_with_bracket(
-    client: IBKRClient, 
-    contract, 
-    action: str, 
+    client: IBKRClient,
+    contract,
+    action: str,
     qty: float,
     sl_price: float | None,
     tp_price: float | None,
     state: TradingSessionState
 ) -> None:
     """Open new position with SL/TP bracket order."""
-    
+
     # Use place_bracket_order which handles Order object creation
     trades = client.place_bracket_order_with_tracking(
         contract, action, qty, sl_price, tp_price
     )
-    
+
     # Store references to SL/TP orders for later cancellation
     # trades[0] = parent, trades[1] = stop (if exists), trades[2] = limit (if exists)
     if len(trades) > 1 and trades[1]:
         state.active_stop_loss = trades[1].order
     if len(trades) > 2 and trades[2]:
         state.active_take_profit = trades[2].order
-    
+
     logger.info(
         "Opened %s position: %s %.2f | SL: %s | TP: %s",
-        action, action, qty, 
+        action, action, qty,
         f"{sl_price:.5f}" if sl_price else "None",
         f"{tp_price:.5f}" if tp_price else "None"
     )
@@ -174,7 +174,7 @@ Replace the entire `execute_trade` function (lines 49-80) with:
 
 ```python
 def calculate_sl_tp_prices(
-    current_price: float, 
+    current_price: float,
     target: float,
     stop_loss_pct: float,
     take_profit_pct: float
@@ -182,33 +182,33 @@ def calculate_sl_tp_prices(
     """Calculate SL and TP prices based on target direction."""
     sl_price = None
     tp_price = None
-    
+
     if stop_loss_pct and target != 0:
         if target > 0:  # LONG
             sl_price = round(current_price * (1 - stop_loss_pct), 5)
         else:  # SHORT
             sl_price = round(current_price * (1 + stop_loss_pct), 5)
-    
+
     if take_profit_pct and target != 0:
         if target > 0:  # LONG
             tp_price = round(current_price * (1 + take_profit_pct), 5)
         else:  # SHORT
             tp_price = round(current_price * (1 - take_profit_pct), 5)
-    
+
     return sl_price, tp_price
 
 
 def execute_trade(
-    client: IBKRClient, 
-    contract, 
-    target: float, 
-    current_pos: float, 
+    client: IBKRClient,
+    contract,
+    target: float,
+    current_pos: float,
     config,
     state: TradingSessionState
 ) -> None:
     """
     Execute trade with stateful position transitions.
-    
+
     Logic flow (matching trader_ibkr.py):
     1. Calculate trades needed: target - current_pos
     2. If target == 0: close position (go neutral)
@@ -220,11 +220,11 @@ def execute_trade(
        - If from NEUTRAL: open SHORT with bracket
     """
     trades = target - current_pos
-    
+
     if trades == 0:
         logger.info("No trade needed - position aligned with target")
         return
-    
+
     # Get current price for SL/TP calculation
     current_price = client.get_current_price(contract)
     if current_price <= 0:
@@ -235,24 +235,24 @@ def execute_trade(
         )
         # Do NOT trade without price visibility - keep current position
         return
-    
+
     # Calculate SL/TP prices
     sl_price, tp_price = calculate_sl_tp_prices(
         current_price, target,
         config.risk.stop_loss_pct,
         config.risk.take_profit_pct
     )
-    
+
     # STATEFUL POSITION TRANSITIONS (from trader_ibkr.py logic)
     if target > 0:  # GOING LONG
         action = "BUY"
         qty = target
-        
+
         if current_pos == 0:  # From NEUTRAL
             open_position_with_bracket(
                 client, contract, action, qty, sl_price, tp_price, state
             )
-            
+
         elif current_pos < 0:  # From SHORT: close first, then open
             # Cancel existing SL/TP
             client.cancel_bracket_orders(
@@ -260,24 +260,24 @@ def execute_trade(
             )
             state.active_stop_loss = None
             state.active_take_profit = None
-            
+
             # Close to neutral
             close_to_neutral(client, contract, current_pos)
-            
+
             # Open new position
             open_position_with_bracket(
                 client, contract, action, qty, sl_price, tp_price, state
             )
-            
+
     elif target < 0:  # GOING SHORT
         action = "SELL"
         qty = abs(target)
-        
+
         if current_pos == 0:  # From NEUTRAL
             open_position_with_bracket(
                 client, contract, action, qty, sl_price, tp_price, state
             )
-            
+
         elif current_pos > 0:  # From LONG: close first, then open
             # Cancel existing SL/TP
             client.cancel_bracket_orders(
@@ -285,15 +285,15 @@ def execute_trade(
             )
             state.active_stop_loss = None
             state.active_take_profit = None
-            
+
             # Close to neutral
             close_to_neutral(client, contract, current_pos)
-            
+
             # Open new position
             open_position_with_bracket(
                 client, contract, action, qty, sl_price, tp_price, state
             )
-            
+
     else:  # target == 0, GOING NEUTRAL
         if current_pos < 0:  # From SHORT
             client.cancel_bracket_orders(
@@ -302,7 +302,7 @@ def execute_trade(
             state.active_stop_loss = None
             state.active_take_profit = None
             close_to_neutral(client, contract, current_pos)
-            
+
         elif current_pos > 0:  # From LONG
             client.cancel_bracket_orders(
                 state.active_stop_loss, state.active_take_profit
@@ -310,7 +310,7 @@ def execute_trade(
             state.active_stop_loss = None
             state.active_take_profit = None
             close_to_neutral(client, contract, current_pos)
-    
+
     # Update expected position after successful order placement
     state.expected_position = target
 ```
@@ -336,11 +336,11 @@ def place_bracket_order_with_tracking(
     """
     parent = MarketOrder(action, quantity)
     parent.transmit = False
-    
+
     trades = []
     parent_trade = self.ib.placeOrder(contract, parent)
     trades.append(parent_trade)
-    
+
     # Stop Loss child order
     if stop_loss:
         sl_action = "SELL" if action == "BUY" else "BUY"
@@ -351,7 +351,7 @@ def place_bracket_order_with_tracking(
         trades.append(stop_trade)
     else:
         trades.append(None)
-    
+
     # Take Profit child order
     if take_profit:
         tp_action = "SELL" if action == "BUY" else "BUY"
@@ -362,7 +362,7 @@ def place_bracket_order_with_tracking(
         trades.append(tp_trade)
     else:
         trades.append(None)
-    
+
     return trades
 ```
 
@@ -415,11 +415,11 @@ if state.expected_position != 0 and current_pos != state.expected_position:
         "SL/TP EVENT DETECTED: expected %.2f, actual %.2f",
         state.expected_position, current_pos
     )
-    
+
     # Clear active orders since they triggered
     state.active_stop_loss = None
     state.active_take_profit = None
-    
+
     # Close any remaining position
     if current_pos != 0:
         logger.info("Closing remaining position after SL/TP")
@@ -427,7 +427,7 @@ if state.expected_position != 0 and current_pos != state.expected_position:
         state.expected_position = 0
     else:
         state.expected_position = 0
-    
+
     # Optional: could break here for session stop, or continue
     # For now, continue trading loop (strategy will compute new target)
 ```

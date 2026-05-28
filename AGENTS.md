@@ -2,7 +2,7 @@
 
 ## Purpose
 Create a Team of Trading Agents Team to cover the whole workflow of a trading session:
- 
+
 
 ## Tech stack
 Openrouter to assign LLMs: https://openrouter.ai/docs/quickstart

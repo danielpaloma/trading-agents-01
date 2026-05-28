@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ib_async.contract import Contract
+
     from src.models.market_data import Bar
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ class Strategy(ABC):
     Concrete strategies must implement `calculate_position(bars) -> int`.
     """
 
-    def __init__(self, name: str, contract, units: int = 10):
+    def __init__(self, name: str, contract: Contract, units: int = 10):
         """
         Initialize strategy.
 

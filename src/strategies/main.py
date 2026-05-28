@@ -1,12 +1,14 @@
 """Independent trading session entry point."""
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from dotenv import load_dotenv
-from ib_async import MarketOrder
+from ib_async import Contract, MarketOrder
 
 from src.config import load_config
 from src.state import TradingSessionState
@@ -23,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def create_contract(config, client: IBKRClient):
+async def create_contract(config: Any, client: IBKRClient) -> Contract:
     """Create instrument contract based on configuration."""
     instr = config.instrument
     if instr.instrument_type == "FOREX":
@@ -36,7 +38,7 @@ async def create_contract(config, client: IBKRClient):
         raise ValueError(f"Unknown instrument type: {instr.instrument_type}")
 
 
-def get_current_position(client: IBKRClient, contract) -> float:
+def get_current_position(client: IBKRClient, contract: Contract) -> float:
     """Get current position for the contract."""
     for pos in client.ib.positions():
         if pos.contract.conId == contract.conId:
@@ -44,7 +46,13 @@ def get_current_position(client: IBKRClient, contract) -> float:
     return 0.0
 
 
-def execute_trade(client: IBKRClient, contract, target: float, current_pos: float, config) -> None:
+def execute_trade(
+    client: IBKRClient,
+    contract: Contract,
+    target: float,
+    current_pos: float,
+    config: Any,
+) -> None:
     """Execute trade to reach target position."""
     trades = target - current_pos
 
@@ -74,7 +82,11 @@ def execute_trade(client: IBKRClient, contract, target: float, current_pos: floa
     client.place_bracket_order(contract, action, qty, stop_loss, take_profit)
     logger.info(
         "Placed bracket order: %s %s | Entry: %.5f | SL: %.5f | TP: %.5f",
-        action, qty, current_price, stop_loss, take_profit,
+        action,
+        qty,
+        current_price,
+        stop_loss,
+        take_profit,
     )
 
 
@@ -129,9 +141,6 @@ async def run_session():
     # Initialize position tracker
     position_tracker = PositionTracker()
     last_fill_count = 0
-
-    # Get initial fills from pre-session
-    initial_fills = client.ib.fills()
 
     # Initial target position
     target = executor.compute_target(state)
@@ -190,7 +199,7 @@ async def run_session():
                     "BUY" if fill.execution.side == "BOT" else "SELL",
                     fill.execution.shares,
                     fill.execution.price,
-                    position_tracker.realized_pnl
+                    position_tracker.realized_pnl,
                 )
             last_fill_count = new_fill_count
 
@@ -210,8 +219,11 @@ async def run_session():
     log_final_report(position_tracker, session_start)
 
     stats = position_tracker.get_stats()
-    logger.info("SESSION COMPLETE - Net P&L: %.2f (after commissions: %.2f)",
-                stats["realized_pnl"], stats["net_pnl"])
+    logger.info(
+        "SESSION COMPLETE - Net P&L: %.2f (after commissions: %.2f)",
+        stats["realized_pnl"],
+        stats["net_pnl"],
+    )
 
     client.disconnect()
     logger.info("Session stopped")

@@ -1,9 +1,11 @@
 # src/strategies/sma_crossover.py
 """SMA Crossover Strategy."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from ib_async.contract import Contract
 
 from src.models.market_data import Bar
 from src.strategies.strategy_base import Strategy
@@ -17,7 +19,7 @@ class SMACrossoverStrategy(Strategy):
     def __init__(
         self,
         name: str,
-        contract,
+        contract: Contract,
         sma_short: int = 50,
         sma_long: int = 200,
         units: int = 1_000,

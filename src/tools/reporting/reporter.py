@@ -1,14 +1,21 @@
 # src/tools/reporting/reporter.py
 """Reporting functions for trade sessions."""
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
 
-def log_final_report(tracker, session_start: datetime) -> None:
+class _HasTradeReport(Protocol):
+    def get_stats(self) -> dict[str, Any]: ...
+    def to_records(self) -> list[dict[str, Any]]: ...
+
+
+def log_final_report(tracker: _HasTradeReport, session_start: datetime) -> None:
     """Log the final trade report at end of session."""
     stats = tracker.get_stats()
     records = tracker.to_records()
@@ -35,10 +42,9 @@ def log_final_report(tracker, session_start: datetime) -> None:
     logger.info("  " + "-" * 50)
 
     for r in records:
-        time_str = r["time"].strftime("%H:%M:%S") if isinstance(r["time"], datetime) else str(r["time"])
-        logger.info(
-            "  %-20s | %-6s | %8.0f | %10.5f",
-            time_str, r["side"], r["qty"], r["price"]
+        time_str = (
+            r["time"].strftime("%H:%M:%S") if isinstance(r["time"], datetime) else str(r["time"])
         )
+        logger.info("  %-20s | %-6s | %8.0f | %10.5f", time_str, r["side"], r["qty"], r["price"])
 
     logger.info("=" * 60)

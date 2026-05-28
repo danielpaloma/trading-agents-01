@@ -9,6 +9,7 @@ def test_state_default_values():
     assert state.active_signal is None
     assert state.session_active is False
 
+
 def test_state_update_signal():
     state = TradingSessionState(symbol="EUR/USD")
     sig = Signal(direction=Direction.LONG, strategy="SMA", reason="SMA crossover")
