@@ -1,6 +1,8 @@
 # src/models/orders.py
 from datetime import datetime
+
 from pydantic import BaseModel
+
 
 class OrderRequest(BaseModel):
     symbol: str
@@ -9,6 +11,7 @@ class OrderRequest(BaseModel):
     order_type: str = "MKT"
     stop_loss: float | None = None
     take_profit: float | None = None
+
 
 class OrderFill(BaseModel):
     order_id: int

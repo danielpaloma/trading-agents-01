@@ -1,7 +1,21 @@
 # src/tools/ibkr_tools.py
 from __future__ import annotations
-from datetime import datetime, timezone
-from ib_async import IB, Forex, CFD, Stock, BarData, MarketOrder, StopOrder, LimitOrder, Trade
+
+from datetime import UTC, datetime
+
+from ib_async import (
+    CFD,
+    IB,
+    BarData,
+    Contract,
+    Forex,
+    LimitOrder,
+    MarketOrder,
+    Stock,
+    StopOrder,
+    Trade,
+)
+
 from src.models.market_data import Bar
 
 
@@ -22,7 +36,9 @@ class IBKRClient:
         """Create a Forex contract for currency pair trading."""
         return Forex(pair=pair, exchange=exchange)
 
-    def create_cfd_contract(self, symbol: str, currency: str = "USD", exchange: str = "IDEALPRO") -> CFD:
+    def create_cfd_contract(
+        self, symbol: str, currency: str = "USD", exchange: str = "IDEALPRO"
+    ) -> CFD:
         """Create a CFD contract for index/currency CFDs."""
         return CFD(symbol=symbol, currency=currency, exchange=exchange)
 
@@ -32,7 +48,7 @@ class IBKRClient:
         """Create a Stock contract for equity trading."""
         return Stock(symbol=symbol, currency=currency, exchange=exchange)
 
-    async def qualify(self, contract):
+    async def qualify(self, contract: Contract) -> Contract:
         """Qualify contract to ensure it's valid for trading."""
         qualified = await self.ib.qualifyContractsAsync(contract)
         if not qualified:
@@ -45,7 +61,7 @@ class IBKRClient:
                 return pos.position
         return 0.0
 
-    def get_current_price(self, contract) -> float:
+    def get_current_price(self, contract: Contract) -> float:
         ticker = self.ib.ticker(contract)
         if ticker and ticker.last:
             return float(ticker.last)
@@ -54,7 +70,7 @@ class IBKRClient:
         return 0.0
 
     async def request_historical_bars(
-        self, contract, bar_size: str = "20 mins", duration: str = "2 D"
+        self, contract: Contract, bar_size: str = "20 mins", duration: str = "2 D"
     ) -> list[Bar]:
         bars: list[BarData] = await self.ib.reqHistoricalDataAsync(
             contract,
@@ -66,17 +82,21 @@ class IBKRClient:
         )
         return [
             Bar(
-                timestamp=b.date.replace(tzinfo=timezone.utc)
-                    if hasattr(b.date, "replace") else datetime.now(tz=timezone.utc),
-                open=b.open, high=b.high, low=b.low,
-                close=b.close, volume=float(b.volume),
+                timestamp=b.date.replace(tzinfo=UTC)
+                if hasattr(b.date, "replace")
+                else datetime.now(tz=UTC),
+                open=b.open,
+                high=b.high,
+                low=b.low,
+                close=b.close,
+                volume=float(b.volume),
             )
             for b in bars
         ]
 
     def place_bracket_order(
         self,
-        contract,
+        contract: Contract,
         action: str,
         quantity: float,
         stop_loss: float,
@@ -100,7 +120,7 @@ class IBKRClient:
             self.ib.placeOrder(contract, tp),
         ]
 
-    def cancel_all_orders(self, contract) -> None:
+    def cancel_all_orders(self, contract: Contract) -> None:
         for trade in self.ib.openTrades():
             if trade.contract.conId == contract.conId:
                 self.ib.cancelOrder(trade.order)

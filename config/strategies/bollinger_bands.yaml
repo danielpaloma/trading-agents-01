@@ -1,5 +1,5 @@
 # Bollinger Bands Strategy Parameters
-# 
+#
 # Trades long when price drops below lower band, short when above upper band,
 # and neutral when price crosses the moving average.
 #

@@ -101,5 +101,3 @@ uv run python -u -m src.strategies.main 2>&1 | tee "logs/session_$(date +'%Y%m%d
 ```
 
 Ensure the `logs` directory exists before running these commands.
-
-

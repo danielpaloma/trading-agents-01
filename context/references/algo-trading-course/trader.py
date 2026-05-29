@@ -2,7 +2,7 @@
 # Please run the following code only with your Paper Trading Account!!!
 # Check the Regular Trading Hours!!!
 
-from ib_async import * 
+from ib_async import *
 import pandas as pd
 import numpy as np
 import datetime as dt
@@ -20,22 +20,22 @@ sma_l = 5
 freq = "1 min"
 units = 10
 end_time = dt.time(11, 55, 0) # stop condition -> insert your time!!!
-contract = Forex('EURUSD') 
+contract = Forex('EURUSD')
 ib.qualifyContracts(contract)
 cfd = CFD("EUR", currency = "USD")
 ib.qualifyContracts(cfd)
 conID = cfd.conId
 
-def onBarUpdate(bars, hasNewBar):  
+def onBarUpdate(bars, hasNewBar):
     global df, last_bar
-    
-    if bars[-1].date > last_bar: 
+
+    if bars[-1].date > last_bar:
         last_bar = bars[-1].date
-    
+
         # Data Processing
-        df = pd.DataFrame(bars)[["date", "open", "high", "low", "close"]].iloc[:-1] 
+        df = pd.DataFrame(bars)[["date", "open", "high", "low", "close"]].iloc[:-1]
         df.set_index("date", inplace = True)
-        
+
         ####################### Trading Strategy ###########################
         #SMA Cross-over
         df = df[["close"]].copy()
@@ -44,11 +44,11 @@ def onBarUpdate(bars, hasNewBar):
         df.dropna(inplace = True)
         df["position"] = np.where(df["sma_s"] > df["sma_l"], 1, -1 )
         ####################################################################
-        
+
         # Trading
         target = df["position"][-1] * units
         execute_trade(target = target)
-        
+
         # Display
         os.system('cls')
         print(df)
@@ -60,21 +60,21 @@ def onBarUpdate(bars, hasNewBar):
 
 def execute_trade(target):
     global current_pos
-    
+
     # 1. get current Position
     try:
         current_pos = [pos.position for pos in ib.positions() if pos.contract.conId == conID][0]
     except:
         current_pos = 0
-         
+
     # 2. identify required trades
     trades = target - current_pos
-        
+
     # 3. trade execution
     if trades > 0:
         side = "BUY"
         order = MarketOrder(side, abs(trades))
-        trade = ib.placeOrder(cfd, order)  
+        trade = ib.placeOrder(cfd, order)
     elif trades < 0:
         side = "SELL"
         order = MarketOrder(side, abs(trades))
@@ -84,16 +84,16 @@ def execute_trade(target):
 
 def trade_reporting():
     global report
-    
+
     fill_df = util.df([fs.execution for fs in ib.fills()])[["execId", "time", "side", "cumQty", "avgPrice"]].set_index("execId")
     profit_df = util.df([fs.commissionReport for fs in ib.fills()])[["execId", "realizedPNL"]].set_index("execId")
     report = pd.concat([fill_df, profit_df], axis = 1).set_index("time").loc[session_start:]
     report = report.groupby("time").agg({"side":"first", "cumQty":"max", "avgPrice":"mean", "realizedPNL":"sum"})
     report["cumPNL"] = report.realizedPNL.cumsum()
-        
+
     os.system('cls')
     print(df, report)
-    
+
 if __name__ == "__main__": # if you run trader.py as python script
     # start trading session
     session_start = pd.to_datetime(datetime.now(timezone.utc))# new
@@ -114,7 +114,7 @@ if __name__ == "__main__": # if you run trader.py as python script
     while True:
         ib.sleep(5) # check every 5 seconds
         if datetime.now(timezone.utc).time() >= end_time: # if stop conditions has been met
-            execute_trade(target = 0) # close open position 
+            execute_trade(target = 0) # close open position
             ib.cancelHistoricalData(bars) # stop stream
             ib.sleep(10)
             try:

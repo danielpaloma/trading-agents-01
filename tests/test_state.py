@@ -1,12 +1,14 @@
 # tests/test_state.py
+from src.models.signals import Direction, Signal
 from src.state import TradingSessionState
-from src.models.signals import Signal, Direction
+
 
 def test_state_default_values():
     state = TradingSessionState(symbol="EUR/USD")
     assert state.current_position == 0.0
     assert state.active_signal is None
     assert state.session_active is False
+
 
 def test_state_update_signal():
     state = TradingSessionState(symbol="EUR/USD")

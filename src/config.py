@@ -1,15 +1,26 @@
 # src/config.py
 """Configuration management for Trading Agents."""
+
 import os
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
+def _get_float(key: str, default: str) -> float:
+    """Get float from env, stripping inline comments."""
+    value = os.getenv(key, default)
+    value = re.sub(r"#.*$", "", value).strip()
+    return float(value)
+
+
 @dataclass
 class ModelConfig:
     """LLM model configuration."""
+
     anthropic_api_key: str
     openrouter_api_key: str
     model_orchestrator: str
@@ -24,6 +35,7 @@ class ModelConfig:
 @dataclass
 class IBKRConfig:
     """Interactive Brokers connection configuration."""
+
     host: str
     port: int
     client_id: int
@@ -32,6 +44,7 @@ class IBKRConfig:
 @dataclass
 class InstrumentConfig:
     """Trading instrument configuration."""
+
     instrument_type: str  # STOCK, FOREX, CFD
     symbol: str
     exchange: str
@@ -41,6 +54,7 @@ class InstrumentConfig:
 @dataclass
 class SessionConfig:
     """Trading session configuration."""
+
     bar_size: str
     session_duration_hours: float
     max_position_units: float
@@ -49,6 +63,7 @@ class SessionConfig:
 @dataclass
 class RiskConfig:
     """Risk and money management configuration."""
+
     stop_loss_pct: float
     take_profit_pct: float
     max_drawdown_pct: float
@@ -58,6 +73,7 @@ class RiskConfig:
 @dataclass
 class StrategyConfig:
     """Trading strategy configuration."""
+
     name: str
     params_file: str  # path to YAML config file for this strategy
 
@@ -65,6 +81,7 @@ class StrategyConfig:
 @dataclass
 class Config:
     """Main configuration container."""
+
     model: ModelConfig
     ibkr: IBKRConfig
     instrument: InstrumentConfig
@@ -100,14 +117,14 @@ def load_config() -> Config:
         ),
         session=SessionConfig(
             bar_size=os.getenv("BAR_SIZE", "1 min"),
-            session_duration_hours=float(os.getenv("SESSION_DURATION_HOURS", "0.01666")),
-            max_position_units=float(os.getenv("MAX_POSITION_UNITS", "10")),
+            session_duration_hours=_get_float("SESSION_DURATION_HOURS", "0.01666"),
+            max_position_units=_get_float("MAX_POSITION_UNITS", "10"),
         ),
         risk=RiskConfig(
-            stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.005")),
-            take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.010")),
-            max_drawdown_pct=float(os.getenv("MAX_DRAWDOWN_PCT", "0.02")),
-            initial_capital=float(os.getenv("INITIAL_CAPITAL", "1000")),
+            stop_loss_pct=_get_float("STOP_LOSS_PCT", "0.005"),
+            take_profit_pct=_get_float("TAKE_PROFIT_PCT", "0.010"),
+            max_drawdown_pct=_get_float("MAX_DRAWDOWN_PCT", "0.02"),
+            initial_capital=_get_float("INITIAL_CAPITAL", "1000"),
         ),
         strategy=StrategyConfig(
             name=os.getenv("STRATEGY_NAME", "ContrarianStrategy"),

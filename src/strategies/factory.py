@@ -1,15 +1,18 @@
 """Strategy factory for creating strategy instances from configuration."""
+
 from __future__ import annotations
-import os
+
 import logging
+import os
 from typing import TYPE_CHECKING
 
 import yaml
+from ib_async.contract import Contract
 
-from src.strategies.strategy_base import Strategy
-from src.strategies.sma_crossover import SMACrossoverStrategy
 from src.strategies.bollinger_bands import BollingerBandsStrategy
 from src.strategies.contrarian import ContrarianStrategy
+from src.strategies.sma_crossover import SMACrossoverStrategy
+from src.strategies.strategy_base import Strategy
 from src.strategies.tanh_strategy import TanhStrategy
 
 if TYPE_CHECKING:
@@ -38,7 +41,7 @@ class StrategyFactory:
     """Factory for creating configured strategy instances."""
 
     @staticmethod
-    def create(strategy_name: str, contract, params_file: str = "") -> Strategy:
+    def create(strategy_name: str, contract: Contract, params_file: str = "") -> Strategy:
         """
         Create a strategy instance by name.
 
@@ -56,8 +59,7 @@ class StrategyFactory:
         cls = _STRATEGY_CLASSES.get(strategy_name)
         if cls is None:
             raise ValueError(
-                f"Unknown strategy: {strategy_name}. "
-                f"Available: {list(_STRATEGY_CLASSES.keys())}"
+                f"Unknown strategy: {strategy_name}. Available: {list(_STRATEGY_CLASSES.keys())}"
             )
 
         params = _load_params(params_file)

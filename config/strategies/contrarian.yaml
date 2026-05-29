@@ -1,7 +1,7 @@
 # Trading Logic:
 # The Contrarian strategy seeks to profit by trading against recent short-term price momentum.
 # - It calculates the price change over a moving window of 'window' historical bars.
-# - If prices have trended upward over the window, 
+# - If prices have trended upward over the window,
 #  the strategy assumes the move is over-extended, so it enters a short position.
 # - If prices have fallen over the window, the strategy takes a long position.
 # - The magnitude of the position is fixed by the 'units' parameter specified below.

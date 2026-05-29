@@ -1,11 +1,14 @@
 # src/models/signals.py
-from enum import Enum
+from enum import StrEnum
+
 from pydantic import BaseModel
 
-class Direction(str, Enum):
+
+class Direction(StrEnum):
     LONG = "long"
     SHORT = "short"
     FLAT = "flat"
+
 
 class Signal(BaseModel):
     direction: Direction

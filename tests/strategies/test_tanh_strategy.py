@@ -1,19 +1,23 @@
 # tests/strategies/test_tanh_strategy.py
 """Tests for TanhStrategy."""
+
 from __future__ import annotations
-import pytest
-import numpy as np
+
 from datetime import datetime, timedelta
 
-from src.strategies.tanh_strategy import TanhStrategy
+import pytest
+
 from src.models.market_data import Bar
+from src.strategies.tanh_strategy import TanhStrategy
 
 
 @pytest.fixture
 def mock_contract():
     """Mock contract for testing."""
+
     class MockContract:
         symbol = "TEST"
+
     return MockContract()
 
 
@@ -57,8 +61,7 @@ def test_insufficient_data_returns_zero(tanh_strategy):
 
 def test_strong_mean_reversion_buy_signal(tanh_strategy):
     """When price drops significantly below mean, should trigger buy."""
-    prices = [100.0, 100.5, 99.5, 100.0, 100.2,
-              99.8, 100.1, 99.9, 95.0, 94.0]
+    prices = [100.0, 100.5, 99.5, 100.0, 100.2, 99.8, 100.1, 99.9, 95.0, 94.0]
     bars = create_bars(prices)
 
     position = tanh_strategy.calculate_position(bars)
@@ -68,8 +71,7 @@ def test_strong_mean_reversion_buy_signal(tanh_strategy):
 
 def test_strong_mean_reversion_sell_signal(tanh_strategy):
     """When price spikes significantly above mean, should trigger sell."""
-    prices = [100.0, 100.5, 99.5, 100.0, 100.2,
-              99.8, 100.1, 99.9, 105.0, 106.0]
+    prices = [100.0, 100.5, 99.5, 100.0, 100.2, 99.8, 100.1, 99.9, 105.0, 106.0]
     bars = create_bars(prices)
 
     position = tanh_strategy.calculate_position(bars)
@@ -79,8 +81,7 @@ def test_strong_mean_reversion_sell_signal(tanh_strategy):
 
 def test_neutral_when_signal_below_threshold(tanh_strategy):
     """When combined signal is weak (below threshold), should return neutral."""
-    prices = [100.0, 100.0, 100.0, 100.0, 100.0,
-              100.0, 100.0, 100.0, 100.0, 100.0]
+    prices = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
     bars = create_bars(prices)
 
     position = tanh_strategy.calculate_position(bars)
@@ -93,8 +94,7 @@ def test_momentum_signal_buy(tanh_strategy):
     tanh_strategy.tanh_weight = 0.0
     tanh_strategy.position_threshold = 0.02
 
-    prices = [100.0, 101.0, 102.0, 103.0, 104.0,
-              105.0, 106.0, 107.0, 108.0, 109.0]
+    prices = [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0]
     bars = create_bars(prices)
 
     position = tanh_strategy.calculate_position(bars)
@@ -119,8 +119,7 @@ def test_position_scaled_by_units(mock_contract):
         momentum_period=3,
     )
 
-    prices = [100.0, 100.5, 99.5, 100.0, 100.2,
-              99.8, 100.1, 99.9, 95.0, 94.0]
+    prices = [100.0, 100.5, 99.5, 100.0, 100.2, 99.8, 100.1, 99.9, 95.0, 94.0]
     bars = create_bars(prices)
 
     pos_5 = strategy_5.calculate_position(bars)

@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ruff: check",
+            "type": "shell",
+            "command": "uv run ruff check .",
+            "problemMatcher": []
+        },
+        {
+            "label": "ruff: format",
+            "type": "shell",
+            "command": "uv run ruff format .",
+            "problemMatcher": []
+        },
+        {
+            "label": "mypy",
+            "type": "shell",
+            "command": "uv run mypy . --show-error-codes",
+            "problemMatcher": "$mypy"
+        }
+    ]
+}

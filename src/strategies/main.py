@@ -1,18 +1,20 @@
 """Independent trading session entry point."""
+
 from __future__ import annotations
+
 import asyncio
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import List
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from dotenv import load_dotenv
-from ib_async import MarketOrder, Fill
+from ib_async import Contract, MarketOrder
 
 from src.config import load_config
-from src.tools.ibkr_tools import IBKRClient
-from src.strategies import StrategyFactory, StrategyExecutor
 from src.state import TradingSessionState
+from src.strategies import StrategyExecutor, StrategyFactory
+from src.tools.ibkr_tools import IBKRClient
+from src.tools.reporting import PositionTracker, log_final_report
 
 load_dotenv()
 
@@ -23,105 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class PositionTracker:
-    """Track fills and calculate realized P&L using FIFO matching."""
-    fills: List[Fill] = field(default_factory=list)
-    realized_pnl: float = 0.0
-    total_commissions: float = 0.0
-
-    def add_fill(self, fill: Fill) -> None:
-        """Add a new fill and update realized P&L."""
-        self.fills.append(fill)
-        self._update_pnl(fill)
-
-    def _update_pnl(self, new_fill: Fill) -> None:
-        """Calculate realized P&L using FIFO matching for opposite sides."""
-        new_side = new_fill.execution.side
-        new_qty = new_fill.execution.shares
-        new_price = new_fill.execution.price
-
-        # Match against existing fills of opposite side
-        for fill in self.fills[:-1]:  # Exclude the new fill
-            if new_qty <= 0:
-                break
-
-            existing_side = fill.execution.side
-            existing_qty = fill.execution.shares
-            existing_price = fill.execution.price
-
-            # Skip if same side or already fully matched
-            if existing_side == new_side:
-                continue
-
-            # Calculate matched quantity
-            matched_qty = min(new_qty, existing_qty)
-
-            # Calculate P&L: SELL price - BUY price (positive = profit)
-            if new_side == "SLD" and existing_side == "BOT":
-                trade_pnl = (new_price - existing_price) * matched_qty
-            elif new_side == "BOT" and existing_side == "SLD":
-                trade_pnl = (existing_price - new_price) * matched_qty
-            else:
-                continue
-
-            self.realized_pnl += trade_pnl
-            new_qty -= matched_qty
-
-        # Track commission
-        if new_fill.commissionReport:
-            self.total_commissions += new_fill.commissionReport.commission
-
-    def get_stats(self) -> dict:
-        """Return trading statistics."""
-        buy_fills = [f for f in self.fills if f.execution.side == "BOT"]
-        sell_fills = [f for f in self.fills if f.execution.side == "SLD"]
-
-        total_bought = sum(f.execution.shares for f in buy_fills)
-        total_sold = sum(f.execution.shares for f in sell_fills)
-        avg_buy_price = (
-            sum(f.execution.price * f.execution.shares for f in buy_fills) / total_bought
-            if total_bought > 0 else 0.0
-        )
-        avg_sell_price = (
-            sum(f.execution.price * f.execution.shares for f in sell_fills) / total_sold
-            if total_sold > 0 else 0.0
-            )
-
-        return {
-            "total_fills": len(self.fills),
-            "realized_pnl": self.realized_pnl,
-            "net_pnl": self.realized_pnl - self.total_commissions,
-            "total_commissions": self.total_commissions,
-            "total_bought": total_bought,
-            "total_sold": total_sold,
-            "avg_buy_price": avg_buy_price,
-            "avg_sell_price": avg_sell_price,
-        }
-
-    def to_records(self) -> List[dict]:
-        """Convert fills to dictionary records for reporting."""
-        records = []
-        running_pnl = 0.0
-
-        # Group fills by time and calculate cumulative P&L
-        for fill in self.fills:
-            side = "BOT" if fill.execution.side == "BOT" else "SELL"
-            qty = fill.execution.shares
-            price = fill.execution.price
-            time = fill.execution.time
-
-            records.append({
-                "time": time,
-                "side": side,
-                "qty": qty,
-                "price": price,
-            })
-
-        return records
-
-
-async def create_contract(config, client: IBKRClient):
+async def create_contract(config: Any, client: IBKRClient) -> Contract:
     """Create instrument contract based on configuration."""
     instr = config.instrument
     if instr.instrument_type == "FOREX":
@@ -134,7 +38,7 @@ async def create_contract(config, client: IBKRClient):
         raise ValueError(f"Unknown instrument type: {instr.instrument_type}")
 
 
-def get_current_position(client: IBKRClient, contract) -> float:
+def get_current_position(client: IBKRClient, contract: Contract) -> float:
     """Get current position for the contract."""
     for pos in client.ib.positions():
         if pos.contract.conId == contract.conId:
@@ -142,7 +46,13 @@ def get_current_position(client: IBKRClient, contract) -> float:
     return 0.0
 
 
-def execute_trade(client: IBKRClient, contract, target: float, current_pos: float, config) -> None:
+def execute_trade(
+    client: IBKRClient,
+    contract: Contract,
+    target: float,
+    current_pos: float,
+    config: Any,
+) -> None:
     """Execute trade to reach target position."""
     trades = target - current_pos
 
@@ -172,44 +82,12 @@ def execute_trade(client: IBKRClient, contract, target: float, current_pos: floa
     client.place_bracket_order(contract, action, qty, stop_loss, take_profit)
     logger.info(
         "Placed bracket order: %s %s | Entry: %.5f | SL: %.5f | TP: %.5f",
-        action, qty, current_price, stop_loss, take_profit,
+        action,
+        qty,
+        current_price,
+        stop_loss,
+        take_profit,
     )
-
-
-def log_final_report(tracker: PositionTracker, session_start: datetime) -> None:
-    """Log the final trade report at end of session."""
-    stats = tracker.get_stats()
-    records = tracker.to_records()
-
-    if not records:
-        logger.info("=== FINAL TRADE REPORT ===")
-        logger.info("No trades executed during this session.")
-        logger.info("=== END REPORT ===")
-        return
-
-    logger.info("=" * 60)
-    logger.info("FINAL TRADE REPORT - Session: %s", session_start.strftime("%Y-%m-%d %H:%M:%S"))
-    logger.info("=" * 60)
-    logger.info("SUMMARY:")
-    logger.info("  Total Fills: %d", stats["total_fills"])
-    logger.info("  Quantity Bought: %.0f @ avg %.5f", stats["total_bought"], stats["avg_buy_price"])
-    logger.info("  Quantity Sold:   %.0f @ avg %.5f", stats["total_sold"], stats["avg_sell_price"])
-    logger.info("  Gross Realized P&L: %.2f", stats["realized_pnl"])
-    logger.info("  Total Commissions:  %.2f", stats["total_commissions"])
-    logger.info("  Net P&L:            %.2f", stats["net_pnl"])
-    logger.info("-" * 60)
-    logger.info("TRADE DETAILS:")
-    logger.info("  %-20s | %-6s | %8s | %10s", "Time", "Side", "Qty", "Price")
-    logger.info("  " + "-" * 50)
-
-    for r in records:
-        time_str = r["time"].strftime("%H:%M:%S") if isinstance(r["time"], datetime) else str(r["time"])
-        logger.info(
-            "  %-20s | %-6s | %8.0f | %10.5f",
-            time_str, r["side"], r["qty"], r["price"]
-        )
-
-    logger.info("=" * 60)
 
 
 async def run_session():
@@ -252,7 +130,7 @@ async def run_session():
         state.history.append(bar)
     state.current_price = bars[-1].close if bars else 0.0
 
-    session_start = datetime.now(timezone.utc)
+    session_start = datetime.now(UTC)
     session_end = session_start + timedelta(hours=config.session.session_duration_hours)
     logger.info(
         "Session duration: %.2f hours | End time: %s",
@@ -263,9 +141,6 @@ async def run_session():
     # Initialize position tracker
     position_tracker = PositionTracker()
     last_fill_count = 0
-
-    # Get initial fills from pre-session
-    initial_fills = client.ib.fills()
 
     # Initial target position
     target = executor.compute_target(state)
@@ -281,7 +156,7 @@ async def run_session():
     while True:
         await asyncio.sleep(5)  # Check every 5 seconds
 
-        if datetime.now(timezone.utc) >= session_end:
+        if datetime.now(UTC) >= session_end:
             logger.info("End time reached - closing session")
             break
 
@@ -324,7 +199,7 @@ async def run_session():
                     "BUY" if fill.execution.side == "BOT" else "SELL",
                     fill.execution.shares,
                     fill.execution.price,
-                    position_tracker.realized_pnl
+                    position_tracker.realized_pnl,
                 )
             last_fill_count = new_fill_count
 
@@ -344,8 +219,11 @@ async def run_session():
     log_final_report(position_tracker, session_start)
 
     stats = position_tracker.get_stats()
-    logger.info("SESSION COMPLETE - Net P&L: %.2f (after commissions: %.2f)",
-                stats["realized_pnl"], stats["net_pnl"])
+    logger.info(
+        "SESSION COMPLETE - Net P&L: %.2f (after commissions: %.2f)",
+        stats["realized_pnl"],
+        stats["net_pnl"],
+    )
 
     client.disconnect()
     logger.info("Session stopped")

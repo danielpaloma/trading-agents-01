@@ -49,10 +49,10 @@ logs/
 Thumbs.db
 Desktop.ini
 
-.vscode/
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/tasks.json
-
 .idea/
+
+# Ignore all archive folders anywhere in the project
+archive/
+**/archive/
+*/archive/
+*/archive/*
