@@ -55,10 +55,14 @@ repos:
 
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.2.0"
+    rev: "v1.15.0"
     hooks:
       - id: mypy
         additional_dependencies:
           - types-PyYAML
-        args: [--no-strict-optional, --ignore-missing-imports]
-        exclude: ^context/
+        exclude: |
+          (?x)(
+              ^context/|
+              ^logs/|
+              ^\.pytest_cache/
+          )

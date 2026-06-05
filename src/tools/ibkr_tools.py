@@ -53,7 +53,15 @@ class IBKRClient:
         qualified = await self.ib.qualifyContractsAsync(contract)
         if not qualified:
             raise ValueError(f"Contract could not be qualified: {contract}")
-        return qualified[0]
+        result = qualified[0]
+        if isinstance(result, list):
+            for r in result:
+                if r is not None:
+                    return r
+            raise ValueError(f"Contract could not be qualified (no valid match): {contract}")
+        if result is None:
+            raise ValueError(f"Contract could not be qualified (returned None): {contract}")
+        return result
 
     def get_position(self, symbol: str) -> float:
         for pos in self.ib.positions():
@@ -82,9 +90,11 @@ class IBKRClient:
         )
         return [
             Bar(
-                timestamp=b.date.replace(tzinfo=UTC)
-                if hasattr(b.date, "replace")
-                else datetime.now(tz=UTC),
+                timestamp=(
+                    b.date.replace(tzinfo=UTC)
+                    if isinstance(b.date, datetime)
+                    else datetime.combine(b.date, datetime.min.time(), tzinfo=UTC)
+                ),
                 open=b.open,
                 high=b.high,
                 low=b.low,
